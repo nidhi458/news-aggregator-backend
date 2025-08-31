@@ -1,23 +1,24 @@
 const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
+require("dotenv").config(); // load API key from .env
 
 const app = express();
 app.use(cors());
 
-const apiKey = "f33dd6098115422e9de8c53fe338fcb9";
+const apiKey = process.env.NEWS_API_KEY;
 
 // Route to get news by category
 app.get("/news", async (req, res) => {
   const category = req.query.category || "general";
 
   try {
-    const response = await fetch(
+    let response = await fetch(
       `https://newsapi.org/v2/top-headlines?country=us&category=${category}&apiKey=${apiKey}`
     );
     let data = await response.json();
 
-    // ✅ If no articles found, fallback to "everything"
+    // Fallback to "everything" if no articles
     if (!data.articles || data.articles.length === 0) {
       const altResponse = await fetch(
         `https://newsapi.org/v2/everything?q=${category}&language=en&sortBy=publishedAt&apiKey=${apiKey}`
@@ -25,7 +26,6 @@ app.get("/news", async (req, res) => {
       data = await altResponse.json();
     }
 
-    console.log("NewsAPI /news response:", data); // debug log
     res.json(data);
   } catch (error) {
     console.error("Error fetching news:", error);
@@ -36,13 +36,11 @@ app.get("/news", async (req, res) => {
 // Route to search news
 app.get("/search", async (req, res) => {
   const query = req.query.q;
-
   try {
     const response = await fetch(
       `https://newsapi.org/v2/everything?q=${query}&language=en&sortBy=publishedAt&apiKey=${apiKey}`
     );
     const data = await response.json();
-    console.log("NewsAPI /search response:", data);
     res.json(data);
   } catch (error) {
     console.error("Error searching news:", error);
@@ -50,5 +48,5 @@ app.get("/search", async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
